@@ -1,4 +1,3 @@
-// src/pages/edit/[id].js
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import axios from 'axios';
@@ -10,18 +9,20 @@ export default function EditProduct() {
   const [product_name, setProductName] = useState('');
   const [product_desc, setProductDesc] = useState('');
   const [status, setStatus] = useState('Draft');
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!id) return;
+    if (!router.isReady) return; // wait until router is ready
     axios.get(`${process.env.NEXT_PUBLIC_API_URL}/products/${id}`)
       .then(res => {
         const p = res.data;
         setProductName(p.product_name);
         setProductDesc(p.product_desc);
         setStatus(p.status);
+        setLoading(false);
       })
       .catch(err => console.error(err));
-  }, [id]);
+  }, [router.isReady, id]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -37,6 +38,8 @@ export default function EditProduct() {
       console.error(err);
     }
   };
+
+  if (loading) return <div className="container"><h1>Loading...</h1></div>;
 
   return (
     <div className="container">
