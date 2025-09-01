@@ -1,4 +1,3 @@
-// src/pages/index.js
 import { useEffect, useState } from "react";
 import axios from "axios";
 import Link from "next/link";
@@ -11,34 +10,28 @@ export default function Home() {
 
   const fetchProducts = async () => {
     try {
-      const res = await axios.get(
-        `${process.env.NEXT_PUBLIC_API_URL}/products`
-      );
+      const [publishedRes, draftsRes] = await Promise.all([
+        axios.get(`${process.env.NEXT_PUBLIC_API_URL}/products/published`),
+        axios.get(`${process.env.NEXT_PUBLIC_API_URL}/products/drafts`),
+      ]);
 
-      const published = res.data.filter(
-        (p) => p.status === "Published" && !p.is_deleted
-      );
-      const drafts = res.data.filter(
-        (p) => p.status === "Draft" && !p.is_deleted
-      );
-
-      setPublishedProducts(published);
-      setDraftProducts(drafts);
+      setPublishedProducts(publishedRes.data);
+      setDraftProducts(draftsRes.data);
 
       setLoading(false);
       setError(false);
     } catch (err) {
       console.error(err);
       setError(true);
-      setLoading(true); // keep loading true so retry can happen
+      setLoading(true); // retry loop will handle
     }
   };
 
   useEffect(() => {
     fetchProducts();
     const interval = setInterval(() => {
-      if (loading) fetchProducts(); // retry while loading
-    }, 5000); // retry every 5 seconds
+      if (loading) fetchProducts();
+    }, 5000);
     return () => clearInterval(interval);
   }, [loading]);
 
@@ -61,8 +54,8 @@ export default function Home() {
 
       {loading && (
         <p>
-          Loading products… Backend might be waking up on Render. This page will
-          retry automatically.
+          Loading products… Backend might be waking up. This page will retry
+          automatically.
         </p>
       )}
 
