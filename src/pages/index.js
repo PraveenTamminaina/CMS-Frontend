@@ -1,17 +1,30 @@
 // src/pages/index.js
-import { useEffect, useState } from 'react';
-import axios from 'axios';
-import Link from 'next/link';
+import { useEffect, useState } from "react";
+import axios from "axios";
+import Link from "next/link";
 
 export default function Home() {
-  const [products, setProducts] = useState([]);
+  const [publishedProducts, setPublishedProducts] = useState([]);
+  const [draftProducts, setDraftProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
   const fetchProducts = async () => {
     try {
-      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/products`);
-      setProducts(res.data.filter(p => p.status === 'Published' && !p.is_deleted));
+      const res = await axios.get(
+        `${process.env.NEXT_PUBLIC_API_URL}/products`
+      );
+
+      const published = res.data.filter(
+        (p) => p.status === "Published" && !p.is_deleted
+      );
+      const drafts = res.data.filter(
+        (p) => p.status === "Draft" && !p.is_deleted
+      );
+
+      setPublishedProducts(published);
+      setDraftProducts(drafts);
+
       setLoading(false);
       setError(false);
     } catch (err) {
@@ -30,7 +43,7 @@ export default function Home() {
   }, [loading]);
 
   const handleDelete = async (id) => {
-    if (!confirm('Are you sure you want to delete this product?')) return;
+    if (!confirm("Are you sure you want to delete this product?")) return;
     try {
       await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/products/${id}`);
       fetchProducts();
@@ -42,37 +55,81 @@ export default function Home() {
   return (
     <div className="container">
       <h1>Products</h1>
-      <Link href="/add"><button className="submit-btn">Add New Product</button></Link>
+      <Link href="/add">
+        <button className="submit-btn">Add New Product</button>
+      </Link>
 
       {loading && (
         <p>
-          Loading products… Backend might be waking up on Render <b>Please wait for atleast 1 minute</b>. 
+          Loading products… Backend might be waking up on Render. This page will
+          retry automatically.
         </p>
       )}
 
       {error && !loading && (
         <div>
-          <p style={{ color: 'red' }}>
-            Could not reach backend. If it’s on Render, it might be sleeping. Try again.
+          <p style={{ color: "red" }}>
+            Could not reach backend. If it’s on Render, it might be sleeping.
+            Try again.
           </p>
-          <button className="submit-btn" onClick={fetchProducts}>Retry Now</button>
+          <button className="submit-btn" onClick={fetchProducts}>
+            Retry Now
+          </button>
         </div>
       )}
 
       {!loading && !error && (
-        <div className="products-grid">
-          {products.map(p => (
-            <div className="product-card" key={p.product_id}>
-              <h3>{p.product_name}</h3>
-              <p>{p.product_desc}</p>
-              <p>Status: {p.status}</p>
-              <div className="card-buttons">
-                <Link href={`/edit/${p.product_id}`}><button className="edit-btn">Edit</button></Link>
-                <button className="delete-btn" onClick={() => handleDelete(p.product_id)}>Delete</button>
+        <>
+          {/* Published Section */}
+          <h2>Published Products</h2>
+          <div className="products-grid">
+            {publishedProducts.map((p) => (
+              <div className="product-card" key={p.product_id}>
+                <h3>{p.product_name}</h3>
+                <p>{p.product_desc}</p>
+                <p>Status: {p.status}</p>
+                <div className="card-buttons">
+                  <Link href={`/edit/${p.product_id}`}>
+                    <button className="edit-btn">Edit</button>
+                  </Link>
+                  <button
+                    className="delete-btn"
+                    onClick={() => handleDelete(p.product_id)}
+                  >
+                    Delete
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+
+          {/* Draft Section */}
+          {draftProducts.length > 0 && (
+            <>
+              <h2 style={{ marginTop: "30px" }}>Draft Products</h2>
+              <div className="products-grid">
+                {draftProducts.map((p) => (
+                  <div className="product-card draft" key={p.product_id}>
+                    <h3>{p.product_name}</h3>
+                    <p>{p.product_desc}</p>
+                    <p>Status: {p.status}</p>
+                    <div className="card-buttons">
+                      <Link href={`/edit/${p.product_id}`}>
+                        <button className="edit-btn">Edit</button>
+                      </Link>
+                      <button
+                        className="delete-btn"
+                        onClick={() => handleDelete(p.product_id)}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </>
       )}
     </div>
   );
