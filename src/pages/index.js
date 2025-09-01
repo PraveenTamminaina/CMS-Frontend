@@ -46,7 +46,7 @@ export default function Home() {
 
       {loading && (
         <p>
-          Loading products… Backend might be waking up on Render. This page will retry automatically.
+          Loading products… Backend might be waking up on Render <b>Please wait for atleast 1 minute</b>. 
         </p>
       )}
 
